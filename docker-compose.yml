@@ -1,0 +1,50 @@
+version: '3'
+services:
+
+  nsb_web_server:
+    container_name: nsb_web_server
+    env_file:
+      - .flask_server.env
+    build:
+      context: ./flask_server
+      dockerfile: Dockerfile
+    volumes:
+      - ./flask_server/app:/app
+      - ./data/db:/db
+      - ./data/uploads:/uploads
+    ports:
+      - "8082:8080"
+    depends_on:
+      - redis
+      - worker
+
+  worker:
+    user: nobody
+    env_file:
+      - .flask_server.env
+    build:
+      context: ./celery_worker
+      dockerfile: Dockerfile
+    volumes:
+      - ./data/uploads:/uploads
+      - ./celery_worker:/worker
+      - ./celery_worker/config:/config
+      - ./celery_worker/phaunos_ml:/phaunos_ml
+      - ./celery_worker/nsb_aad:/nsb_aad
+    entrypoint: celery -A celery_app worker --loglevel=info
+    depends_on:
+      - redis
+
+  nsb_tf_server:
+    image: tensorflow/serving
+    container_name: nsb_tf_server
+    volumes:
+      - ./config:/config
+      - ./tf_models:/models
+    command: --model_config_file=/config/tf_serving.conf
+    ports:
+      - "8500:8500"
+      - "8501:8501"
+
+  redis:
+    image: redis

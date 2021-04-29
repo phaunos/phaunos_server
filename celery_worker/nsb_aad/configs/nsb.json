@@ -1,0 +1,6 @@
+{
+    "sample_rate": 22050,
+    "frame_hop_length": 128,
+    "segment_duration": 2,
+    "segment_hop_duration": 2
+}

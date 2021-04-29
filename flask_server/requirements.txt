@@ -1,0 +1,13 @@
+flask-sqlalchemy
+flask-migrate
+flask-shell-ipython
+flask-wtf
+Flask-JWT-Extended
+flask-marshmallow
+marshmallow-sqlalchemy
+Flask-Mail
+flask-cors
+Celery
+redis
+elasticsearch
+audioread

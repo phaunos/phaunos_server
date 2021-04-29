@@ -1,0 +1,1 @@
+{"sample_rate": 22050, "win_length": 512, "hop_length": 128, "min_freq": 500, "max_freq": 11025, "clipping_threshold": 10, "opening_kernel_shape": [2, 3], "median_filter_shape": 10, "min_activity_dur": 0.1}

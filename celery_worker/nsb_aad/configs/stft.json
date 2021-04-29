@@ -1,0 +1,6 @@
+{
+    "sample_rate": 22050,
+    "win_length": 256,
+    "hop_length": 32,
+    "scaling": "log"
+}

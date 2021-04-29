@@ -1,0 +1,1 @@
+{"sr": 22050, "n_fft": 512, "hop_length": 128, "fmin": 500, "fmax": 10000, "log": true, "n_mels": 64, "example_duration": 2, "example_hop_duration": 1, "dtype": "F32"}

@@ -1,0 +1,9 @@
+Celery
+redis
+boto3
+elasticsearch
+scipy==1.4.1
+librosa==0.8
+matplotlib==3.3.1
+numpy==1.18.5
+tensorflow==2.3.0

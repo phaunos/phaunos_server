@@ -1,0 +1,222 @@
+{% extends 'base.html' %}
+
+{% block header %}
+<title>NSB</title>
+<link rel="icon" href="{{ url_for('static', filename='images/icon.png') }}">
+{% endblock %}
+
+{% block content %}
+
+<div id='upload' {% if not current_user %} class='disabled' {% endif %}>
+    <div class="form-group">
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1">File</span>
+            </div>
+            <div class="custom-file">
+                <input type="file" class="custom-file-input" id="filename">
+                <label class="custom-file-label" for="inputGroupFile02">
+                    Choose audio file (wav or mp3 only). 20 MB max.
+                </label>
+            </div>
+        </div>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1">Site</span>
+            </div>
+            <select class="form-control" id="device">
+                <option selected value="-1">Select device</option>
+                {% for d in devices %}
+                <option value="{{ d.id }}">{{ d.name }}</option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="input-group mb-3">
+            <div class="input-group-prepend">
+                <span class="input-group-text" id="basic-addon1">Date (UTC)</span>
+            </div>
+            <input type="text" id="utcdate" class="form-control" placeholder="E.g. 2020-10-10T15:23:23" aria-label="E.g. 2020-10-10T15:23:23" aria-describedby="basic-addon1">
+        </div>
+        <button id="upload_btn" class="btn btn-primary">Submit</button>
+    </div>
+</div>
+<div style="margin-top:10px;">
+    <span id="upload_msg" style="color:green"></button>
+</div>
+
+<div id="task_status" style="clear:both;"></div>
+
+
+{% endblock %}
+
+{% block script %}
+<script type="text/javascript">
+
+    /*************
+    * Check date *
+    *************/
+
+    function parseDate(filename) {
+        var res = filename.match(/(\d{4})(\d{2})(\d{2})_(\d{2})(\d{2})(\d{2})/);
+        if(!res) return false;
+        return res[1] + "-" + res[2] + "-" + res[3] + "T" + res[4] + ":" + res[5] + ":" + res[6];
+    }
+    
+    function validateDate(date_str) {
+        var res = date_str.match(/(\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2})/);
+        if(!res) return false;
+        else return true;
+    }
+
+    function resetFields() {
+        // reset upload form fields
+        $("#utcdate").val('');
+        $('#device option[value=-1]').prop('selected', true);
+    }
+
+    $(document).ready(function() {
+ 
+        var csrf_token = "{{ csrf_token() }}";
+
+        resetFields();
+
+        /**************
+        * Handle auth *
+        **************/
+
+        $('#auth_container').on('click', '#login_btn', function(){
+
+            var formData = new FormData();
+            formData.append('username', $("#username").val());
+            formData.append('password', $("#password").val());
+
+            axios({
+                method: 'post',
+                url: '/api/user/login',
+                data: formData,
+                headers: {
+                    "X-CSRFToken": csrf_token, 
+                    "content-type": "multipart/form-data"
+                }
+            }).then(function(response) {
+                $("#auth_msg").empty();
+                $('#auth_container').html(response.data.html);
+                $('#upload').toggleClass("disabled");
+            }).catch(function (error) {
+                $("#auth_msg").html(error.response.data.msg).css('color', 'red');
+            });
+        });
+        
+        $('#auth_container').on('click', '#logout_btn', function(){
+
+            resetFields();
+
+            axios({
+                method: 'get',
+                url: '/api/user/logout',
+                headers: {
+                    "X-CSRFToken": csrf_token, 
+                    "content-type": "multipart/form-data"
+                }
+            }).then(function(response) {
+                $("#auth_msg").empty();
+                $('#auth_container').html(response.data.html);
+                $('#upload').toggleClass("disabled");
+            }).catch(function (error) {
+                $("#auth_msg").html(error.response.data.msg).css('color', 'red');
+            });
+        });
+
+        /* Show filename in form input */
+        $("#filename").on("change", function() {
+            var fileName = $(this).val().split("\\").pop();
+            var date = parseDate(fileName);
+            if(date){
+                $("#utcdate").val(date);
+            }
+            $(this).siblings(".custom-file-label").addClass("selected").html(fileName);
+        });
+
+        /**********************************
+        * Handle audio file submit button *
+        **********************************/
+
+        var fileInput = document.getElementById('filename');
+        $("#upload_btn").click(function(event){
+
+            $("#upload_btn").attr("disabled", true);
+            $("#upload_msg").empty();
+
+            if ($("#device").children("option:selected").val() == "-1"){
+                $("#upload_msg").html("Please select a device").css('color', 'red');
+                $("#upload_btn").attr("disabled", false);
+                return
+            }
+            if (!validateDate($("#utcdate").val())){
+                $("#upload_msg").html("Please make sure the timestamp matches the template.").css('color', 'red');
+                $("#upload_btn").attr("disabled", false);
+                return
+            }
+            
+            $("#task_status").html("Loading...");
+
+            var formData = new FormData();
+            formData.append('file', fileInput.files[0]);
+            formData.append('device_id', $("#device").children("option:selected").val());
+            formData.append('timestamp', $("#utcdate").val());
+
+            axios({
+                method: 'post',
+                url: '/_upload',
+                data: formData,
+                headers: {
+                    "X-CSRFToken": csrf_token, 
+                    "content-type": "multipart/form-data"
+                }
+            }).then(function (response) {
+                $("#upload_msg").html('');
+                status_url = response.headers['location'];
+                update_progress(status_url);
+            }).catch(function (error) {
+                $("#task_status").empty();
+                $("#upload_btn").attr("disabled", false);
+                $("#upload_msg").html(error.response.data.error).css('color', 'red');
+            })
+        });
+
+        function update_progress(status_url) {
+            axios.get(status_url)
+            .then((response) => {
+                if (response.data.state == 'PENDING' || response.data.state == 'PROGRESS'){
+                    $("#task_status").empty()
+                    $.each(response.data.status, function( index, value ){
+                        $("#task_status").append($('<div/>', {
+                            html: value
+                        }))
+                    });
+                    // rerun in 2 seconds
+                    setTimeout(function() {
+                        update_progress(status_url);
+                    }, 2000);
+                }
+                else{
+                    $("#upload_btn").attr("disabled", false);
+                    $("#task_status").empty()
+                    $.each(response.data.status, function( index, value ){
+                        $("#task_status").append($('<div/>', {
+                            html: value
+                        }))
+                    });
+                }
+
+            }, (error) => {
+                console.log(error);
+            });
+        }
+
+    }); 
+
+</script>
+
+
+{% endblock %}

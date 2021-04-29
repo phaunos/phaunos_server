@@ -1,0 +1,2 @@
+class NSBAADError(Exception):
+    pass

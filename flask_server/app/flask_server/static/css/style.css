@@ -1,0 +1,41 @@
+.center {
+  margin: auto;
+}
+
+#container {
+    padding: 10px;
+}
+
+#upload{
+    width: 700px;
+    margin-top: 5px;
+    margin-bottom: 5px;
+}
+
+#audio {
+    margin-top: 20px;
+    visibility: hidden;
+}
+
+#audio_control {
+/*    width: 100px;*/
+}
+
+#results {
+    margin-top: 20px;
+    visibility: hidden;
+}
+
+#playpausebtn {
+    cursor: pointer;
+}
+
+.material-icons.md-36 { font-size: 36px; }
+
+.disabled
+{
+  pointer-events: none;
+
+  /* for "disabled" effect */
+  opacity: 0.5;
+}

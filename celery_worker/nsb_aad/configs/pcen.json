@@ -1,0 +1,16 @@
+{
+    "sample_rate": 22050,
+    "win_length": 256,
+    "n_fft": 1024,
+    "hop_length": 32,
+    "window": "flattop",
+    "n_mels": 128,
+    "fmin": 2000,
+    "fmax": 11025,
+    "scaling": "pcen",
+    "pcen_eps": 1e-6,
+    "pcen_gain": 0.8,
+    "pcen_bias": 10.0,
+    "pcen_power": 0.25,
+    "pcen_time_constant": 0.06
+}
